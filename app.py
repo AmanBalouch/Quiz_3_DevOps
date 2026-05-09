@@ -37,64 +37,38 @@ def search_news(keyword):
         driver = None
         driver = webdriver.Chrome(options=get_chrome_options())
         
-        # Construct search URL
+        # Try direct URL first
         search_url = f"https://abbtakk.tv/?s={keyword}"
         logger.info(f"Searching for: {search_url}")
         
         driver.get(search_url)
-        time.sleep(3)  # Wait for page to load
+        time.sleep(5)  # Longer wait for page to load
         
-        # Try to find the first article link
-        wait = WebDriverWait(driver, 10)
+        # Get ALL links and filter
+        all_links = driver.find_elements(By.TAG_NAME, "a")
+        logger.info(f"Found {len(all_links)} total links on page")
         
-        try:
-            # Try multiple methods to find articles
-            wait = WebDriverWait(driver, 10)
-            article = None
+        # Filter for article links
+        for link in all_links:
+            href = link.get_attribute("href")
+            text = link.text.strip()
             
-            # Method 1: Try XPath to find any link with article in href or that looks like article
-            try:
-                article = wait.until(
-                    EC.presence_of_element_located((By.XPATH, "//a[contains(@href, '/')][@href!='#']"))
-                )
-            except:
-                pass
+            # Skip empty links and navigation
+            if not href or not text or len(text) < 5:
+                continue
             
-            # Method 2: Try common CSS selectors
-            if not article:
-                selectors = ["article a", ".post a", ".entry-title a", "h2 a", "h3 a", ".title a"]
-                for selector in selectors:
-                    try:
-                        article = driver.find_element(By.CSS_SELECTOR, selector)
-                        if article and article.get_attribute("href"):
-                            break
-                    except:
-                        continue
+            # Skip social/external links
+            if any(skip in href.lower() for skip in ["facebook", "twitter", "youtube", "#", "javascript", "contact", "about"]):
+                continue
             
-            # Method 3: Get first non-empty link
-            if not article:
-                all_links = driver.find_elements(By.TAG_NAME, "a")
-                for link in all_links:
-                    href = link.get_attribute("href")
-                    if href and ("article" in href.lower() or ".com/" in href):
-                        article = link
-                        break
-            
-            if not article:
-                logger.error("No article link found")
-                return None, None
-                
-            article_url = article.get_attribute("href")
-            article_title = article.text.strip() or "Article"
-            
-            logger.info(f"Found article: {article_title}")
-            logger.info(f"Article URL: {article_url}")
-            
-            return article_url, article_title
-            
-        except Exception as e:
-            logger.error(f"Error finding article: {e}")
-            return None, None
+            # Valid article found
+            if href.startswith("http"):
+                logger.info(f"Found article: {text}")
+                logger.info(f"URL: {href}")
+                return href, text
+        
+        logger.error("No valid article links found")
+        return None, None
             
     except Exception as e:
         logger.error(f"Error in search_news: {e}")
