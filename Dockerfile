@@ -19,8 +19,11 @@ RUN apt-get update && apt-get install -y \
     libgconf-2-4 \
     libxi6 \
     libxrender1 \
-    libxext6 \
-    && rm -rf /var/lib/apt/lists/*
+    libxext6 \    libfontconfig1 \
+    libfreetype6 \
+    libuuid1 \
+    libx11-6 \
+    libx11-xcb1 \    && rm -rf /var/lib/apt/lists/*
 
 # Install Chromium and chromedriver separately with proper deps
 RUN apt-get update && apt-get install -y \
