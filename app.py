@@ -35,7 +35,14 @@ def search_news(keyword):
     """Search for news article on abbtakk.tv and return the first result"""
     try:
         driver = None
-        driver = webdriver.Chrome(options=get_chrome_options())
+        # Use explicit chromedriver path for Docker compatibility
+        chrome_options = get_chrome_options()
+        try:
+            # Try default first (local or in PATH)
+            driver = webdriver.Chrome(options=chrome_options)
+        except:
+            # Try explicit path for Docker
+            driver = webdriver.Chrome("/usr/bin/chromedriver", options=chrome_options)
         
         # Try direct URL first
         search_url = f"https://abbtakk.tv/?s={keyword}"
@@ -81,7 +88,11 @@ def fetch_article_content(article_url):
     """Fetch the content of the article"""
     try:
         driver = None
-        driver = webdriver.Chrome(options=get_chrome_options())
+        chrome_options = get_chrome_options()
+        try:
+            driver = webdriver.Chrome(options=chrome_options)
+        except:
+            driver = webdriver.Chrome("/usr/bin/chromedriver", options=chrome_options)
         driver.get(article_url)
         time.sleep(2)
         

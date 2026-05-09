@@ -6,7 +6,7 @@ FROM ubuntu:22.04
 
 # Set environment
 ENV DEBIAN_FRONTEND=noninteractive
-ENV PATH="/usr/local/bin:${PATH}"
+ENV PATH="/usr/local/bin:/usr/bin:${PATH}"
 
 # Install Python and system dependencies
 RUN apt-get update && apt-get install -y \
@@ -14,11 +14,22 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     curl \
     wget \
-    gnupg \
+    ca-certificates \
+    libnss3 \
+    libgconf-2-4 \
+    libxi6 \
+    libxrender1 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Chromium and chromedriver separately with proper deps
+RUN apt-get update && apt-get install -y \
     chromium-browser \
     chromium-driver \
-    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Verify chromedriver is working
+RUN ls -la /usr/bin/chromedriver && /usr/bin/chromedriver --version
 
 # Set working directory
 WORKDIR /app
