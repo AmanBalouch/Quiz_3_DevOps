@@ -48,12 +48,44 @@ def search_news(keyword):
         wait = WebDriverWait(driver, 10)
         
         try:
-            # Common selectors for AbbtakTv (adjust based on actual structure)
-            article = wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "article a, .post-title a, .entry-title a, h2 a"))
-            )
+            # Try multiple methods to find articles
+            wait = WebDriverWait(driver, 10)
+            article = None
+            
+            # Method 1: Try XPath to find any link with article in href or that looks like article
+            try:
+                article = wait.until(
+                    EC.presence_of_element_located((By.XPATH, "//a[contains(@href, '/')][@href!='#']"))
+                )
+            except:
+                pass
+            
+            # Method 2: Try common CSS selectors
+            if not article:
+                selectors = ["article a", ".post a", ".entry-title a", "h2 a", "h3 a", ".title a"]
+                for selector in selectors:
+                    try:
+                        article = driver.find_element(By.CSS_SELECTOR, selector)
+                        if article and article.get_attribute("href"):
+                            break
+                    except:
+                        continue
+            
+            # Method 3: Get first non-empty link
+            if not article:
+                all_links = driver.find_elements(By.TAG_NAME, "a")
+                for link in all_links:
+                    href = link.get_attribute("href")
+                    if href and ("article" in href.lower() or ".com/" in href):
+                        article = link
+                        break
+            
+            if not article:
+                logger.error("No article link found")
+                return None, None
+                
             article_url = article.get_attribute("href")
-            article_title = article.text
+            article_title = article.text.strip() or "Article"
             
             logger.info(f"Found article: {article_title}")
             logger.info(f"Article URL: {article_url}")
