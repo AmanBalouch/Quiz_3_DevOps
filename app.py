@@ -4,6 +4,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 import time
 from summarization import summarize_text
 import logging
@@ -35,14 +37,10 @@ def search_news(keyword):
     """Search for news article on abbtakk.tv and return the first result"""
     try:
         driver = None
-        # Use explicit chromedriver path for Docker compatibility
         chrome_options = get_chrome_options()
-        try:
-            # Try default first (local or in PATH)
-            driver = webdriver.Chrome(options=chrome_options)
-        except:
-            # Try explicit path for Docker
-            driver = webdriver.Chrome("/usr/bin/chromedriver", options=chrome_options)
+        # Use webdriver-manager to automatically handle chromedriver
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
         
         # Try direct URL first
         search_url = f"https://abbtakk.tv/?s={keyword}"
@@ -89,10 +87,9 @@ def fetch_article_content(article_url):
     try:
         driver = None
         chrome_options = get_chrome_options()
-        try:
-            driver = webdriver.Chrome(options=chrome_options)
-        except:
-            driver = webdriver.Chrome("/usr/bin/chromedriver", options=chrome_options)
+        # Use webdriver-manager to automatically handle chromedriver
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
         driver.get(article_url)
         time.sleep(2)
         
